@@ -23,5 +23,6 @@ es_data/
 mysql_data/
 es-data/
 mysql-data/
+kafka-data/
 .env
 */.env
