@@ -1,0 +1,67 @@
+services:
+  kafka:
+    image: bitnami/kafka:latest
+    container_name: kafka
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      # KRaft 相关配置
+      KAFKA_CFG_NODE_ID: 1
+      KAFKA_CFG_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: '1@kafka:9093'
+      # 监听器配置
+      KAFKA_CFG_LISTENERS: 'PLAINTEXT://:29092,CONTROLLER://:9093,EXTERNAL://:9092'
+      KAFKA_CFG_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:29092,EXTERNAL://localhost:9092'
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT'
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      # 其他配置
+      ALLOW_PLAINTEXT_LISTENER: 'yes'
+      KAFKA_KRAFT_CLUSTER_ID: 'LlMezgqrRLG9K7pFxc4J5A'
+    volumes:
+      - kafka_data:/bitnami/kafka
+    networks:
+      - kafka-net
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:29092 --list"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+
+  # ======== Elasticsearch 8.x ========
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.2
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node         # 单节点模式
+      - xpack.security.enabled=false       # 关闭安全/认证
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m     # 限制ES使用内存
+    ports:
+      - "9200:9200"
+    networks:
+      - kafka-net
+    volumes:
+      - ./es-data:/usr/share/elasticsearch/data
+
+  # ======== MySQL 8.x ========
+  mysql:
+    image: mysql:8.0
+    container_name: my_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASS}"       # 请自行修改
+      MYSQL_DATABASE: "${DB_NAME}"         # 初始化数据库
+      MYSQL_USER: "${DB_USER}"
+      MYSQL_PASSWORD: "${DB_PASS}"
+    ports:
+      - "13306:3306"
+    networks:
+      - kafka-net
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+networks:
+  kafka-net:
+    driver: bridge
+
+volumes:
+  kafka_data:
