@@ -76,6 +76,7 @@ func runKafkaConsumer(es *elasticsearch.Client) {
 		Topic:    "crawler-pixiv",
 		MinBytes: 1,    // 每次最少读1字节
 		MaxBytes: 10e6, // 每次最多读10MB
+		MaxWait:  time.Millisecond * 250,
 	})
 	defer r.Close()
 
