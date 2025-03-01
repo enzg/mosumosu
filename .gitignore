@@ -26,3 +26,4 @@ mysql-data/
 kafka-data/
 .env
 */.env
+.DS_Store
